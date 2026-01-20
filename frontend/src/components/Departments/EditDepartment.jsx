@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 const EditDepartment = () => {
     const {id} = useParams()
-    const [department, setDepartments] = useState([]);
+    const [department, setDepartment] = useState([]);
     const [depLoading, setDepLoading] = useState(false);
     const navigate = useNavigate()
 
@@ -22,7 +22,7 @@ const EditDepartment = () => {
                 }
             );
                 if(response.data.success){
-                setDepartments(response.data.department)
+                setDepartment(response.data.department)
                 }
             }catch(error){
                 if(error.response && !error.response.data.success){
@@ -39,7 +39,7 @@ const EditDepartment = () => {
 
 const handleChange = (e) => {
         const {name, value} = e.target;
-        setDepartments({...department, [name] : value})
+        setDepartment({...department, [name] : value})
     }
 
     const handleSubmit = async (e) => {
