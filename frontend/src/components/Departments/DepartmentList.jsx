@@ -19,11 +19,12 @@ const DepartmentList = () => {
                 })
                 if(response.data.success){
                     let sno = 1;
+                    console.log(response.data)
                     const data = response.data.departments.map((dep) => ({
                         _id: dep._id,
                         sno: sno++,
                         dep_name: dep.dep_name,
-                        action:(<DepartmentButtons _id={dep._id} />),
+                        action:(<DepartmentButtons DepId={dep._id} />),
                     }))
                     setDepartments(data)
                 }

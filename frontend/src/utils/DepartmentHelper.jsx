@@ -46,14 +46,16 @@ export const columns = [
   },
 ];
 
-export const DepartmentButtons = ({ _id }) => {
+export const DepartmentButtons = ({ DepId }) => {
   const navigate = useNavigate(); // 👈 عرفنا navigate هنا
-
   return (
+    
     <div className="flex space-x-3">
       <button
         className="px-3 py-1 bg-teal-600 text-white"
-        onClick={() => navigate(`/admin-dashboard/department/${_id}`)}
+        onClick={() => navigate(`/admin-dashboard/department/${DepId}`
+        
+        )}
       >
         Edit
       </button>
