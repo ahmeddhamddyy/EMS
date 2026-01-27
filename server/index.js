@@ -1,19 +1,18 @@
-import express from 'express'
-import cors from 'cors'
-import authRouter from './routes/auth.js'
-import departmentRouter from './routes/department.js'
-import connectToDatabase from './db/db.js'
+import express from 'express';
+import cors from 'cors';
+import connectToDatabase from './db/db.js';
+import authRouter from './routes/auth.js';
+import soldierRouter from './routes/soldier.js';
 
+const app = express();
+connectToDatabase(); // الاتصال بقاعدة بيانات MongoDB المحلية
 
-connectToDatabase()
-const app = express()
-app.use(cors())
-app.use(express.json())
-app.use("/api/auth", authRouter)
-app.use("/api/department", departmentRouter)
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(express.json());
 
+// تعريف المسارات
+app.use('/api/auth', authRouter);
+app.use('/api/soldier', soldierRouter);
 
-const PORT = process.env.PORT || 5000
-app.listen(process.env.PORT, () =>{
-    console.log(`SERVER IS CURRENTLY WORKING ON PORT ${process.env.PORT}`)
-})
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT} ✅`));

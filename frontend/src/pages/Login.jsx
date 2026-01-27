@@ -14,10 +14,8 @@ const Login = () => {
         e.preventDefault()
 
         try {
-            const response = await axios.post("http://localhost:5000/api/auth/login",
-                {email, password}
-            );
-            if(response.data.success) {
+            // FIXED: Added the full backend URL here
+            const response = await axios.post("http://127.0.0.1:5000/api/auth/login", {email, password});            if(response.data.success) {
                 login(response.data.user)
                 console.log(response.data.user)
                 localStorage.setItem("token", response.data.token)

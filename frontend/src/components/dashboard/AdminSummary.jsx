@@ -1,32 +1,52 @@
-import React from 'react'
-import SummaryCard from './SummaryCard'
-import { FaBuilding, FaTimesCircle, FaCheckCircle, FaFileAlt, FaHourglassEnd, FaMoneyBillWave, FaUsers} from 'react-icons/fa'
-
+import React, { useEffect, useState } from 'react';
+import { FaUserTie, FaUserShield, FaUsers } from 'react-icons/fa';
+import axios from 'axios';
 
 const AdminSummary = () => {
-    return(
-        <div className='p-6'>
-            <h3 className='text-2xl font-bold'> DashBoard Overview</h3>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mt-6'>
-                <SummaryCard icon={<FaUsers />} text="Total Employees" number={13} color="bg-teal-600" />
-                <SummaryCard icon={<FaBuilding />} text="Total Departments" number={5} color="bg-yellow-600" />
-                <SummaryCard icon={<FaMoneyBillWave />} text="Monthly Salary" number="$654" color="bg-yellow-600" />
+    const [stats, setStats] = useState({ officers: 0, sergeants: 0, soldiers: 0 });
 
+    useEffect(() => {
+        // جلب الإحصائيات من السيرفر
+        const fetchStats = async () => {
+            try {
+                const res = await axios.get("http://127.0.0.1:5000/api/soldier/stats");
+                setStats(res.data);
+            } catch (err) { console.log("خطأ في جلب الإحصائيات"); }
+        };
+        fetchStats();
+    }, []);
 
-            </div>
-            <div className='mt-12'>
-            <h4 className='text-center text-2xl font-bold'>Leave Details</h4>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-6'>
-                <SummaryCard icon={<FaFileAlt />} text="Leave Applied" number={5} color="bg-teal-600" />
-                <SummaryCard icon={<FaCheckCircle />} text="Leave Approved" number={2} color="bg-green-600" />
-                <SummaryCard icon={<FaHourglassEnd />} text="Leave Pending" number={4} color="bg-yellow-600" />
-                <SummaryCard icon={<FaTimesCircle />} text="Leave Rejected" number={1} color="bg-red-600" />
-
-
+    return (
+        <div className="p-6 bg-gray-100" dir="rtl">
+            <h2 className="text-2xl font-bold mb-6 text-teal-900">ملخص القوة العسكرية - الكتيبة الخامسة</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* كارت الضباط */}
+                <div className="bg-white p-6 rounded-lg shadow-md border-r-8 border-yellow-500 flex items-center justify-between">
+                    <div>
+                        <p className="text-gray-500 font-bold">إجمالي الضباط</p>
+                        <p className="text-3xl font-black">{stats.officers}</p>
+                    </div>
+                    <FaUserTie className="text-4xl text-yellow-500" />
+                </div>
+                {/* كارت ضباط الصف */}
+                <div className="bg-white p-6 rounded-lg shadow-md border-r-8 border-blue-500 flex items-center justify-between">
+                    <div>
+                        <p className="text-gray-500 font-bold">إجمالي ضباط الصف</p>
+                        <p className="text-3xl font-black">{stats.sergeants}</p>
+                    </div>
+                    <FaUserShield className="text-4xl text-blue-500" />
+                </div>
+                {/* كارت الجنود */}
+                <div className="bg-white p-6 rounded-lg shadow-md border-r-8 border-green-600 flex items-center justify-between">
+                    <div>
+                        <p className="text-gray-500 font-bold">إجمالي الجنود</p>
+                        <p className="text-3xl font-black">{stats.soldiers}</p>
+                    </div>
+                    <FaUsers className="text-4xl text-green-600" />
+                </div>
             </div>
         </div>
-        </div>
-    )
-}
+    );
+};
 
-export default AdminSummary
+export default AdminSummary;

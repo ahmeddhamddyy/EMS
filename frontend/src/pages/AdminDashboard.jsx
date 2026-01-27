@@ -1,24 +1,24 @@
-import React from 'react'
-import { useAuth } from '../context/authContext'
-import AdminSidebar from '../components/dashboard/AdminSidebar'
-import Navbar from '../components/dashboard/navbar'
-import AdminSummary from '../components/dashboard/AdminSummary'
-import { Outlet } from 'react-router-dom'
-
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import AdminSidebar from '../components/dashboard/AdminSidebar';
+import Navbar from '../components/dashboard/Navbar';
 
 const AdminDashboard = () => {
-    const {user} = useAuth()
-
-   
-    return(
-        <div className='flex'>
+    return (
+        <div className="flex bg-gray-100 min-h-screen" dir="rtl">
+            {/* القائمة الجانبية على اليمين */}
             <AdminSidebar />
-            <div className='flex-1 ml-64 bg-gray-100 h-screen'>
+
+            {/* المحتوى الرئيسي على اليسار */}
+            <div className="flex-1 mr-64"> 
                 <Navbar />
-                <Outlet />
+                <div className="p-6">
+                    {/* هنا بتظهر الصفحات الفرعية زي الملخص أو البيانات العسكرية */}
+                    <Outlet />
+                </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default AdminDashboard
+export default AdminDashboard;

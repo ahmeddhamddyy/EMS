@@ -1,55 +1,48 @@
-import React from 'react'
-import {NavLink} from 'react-router-dom'
-import { FaBuilding, FaCalendarAlt, FaCogs ,FaMoneyBillWave, FaTachometerAlt, FaUsers } from 'react-icons/fa'
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { FaTachometerAlt, FaUserShield, FaSignOutAlt } from 'react-icons/fa';
 
 const AdminSidebar = () => {
-    return(
-        <div className='bg-gray-800 text-white h-screen fixed left-0 top-0 bottom-0 space-y-2 w-64'> 
-        <div className='bg-teal-600 h-12 flex items-center justify-center'>
-        <h3 className='text-2xl text-center font-pacific'>Emplyee MS</h3>
-        </div>
-        <div>
-            <div>
-                
+    return (
+        <div className="bg-teal-900 text-white h-screen fixed right-0 top-0 w-64 shadow-xl" dir="rtl">
+            <div className="p-6 text-center border-b border-teal-800">
+                <h2 className="text-xl font-black text-yellow-500">منظومة الكتيبة 5</h2>
+                <p className="text-xs text-teal-300">نظام إدارة السجلات</p>
             </div>
-            <div>
-                <NavLink to="/admin-dashboard"
-                className={({isActive}) => `${isActive ? "bg-teal-500 " :  " "}flex items-center space-x-4 block py-2.5 px-4 rounded` }
-                end
-                >
-                <FaTachometerAlt />
-                <span>DashBoard</span>
 
-                </NavLink>
-                <NavLink to="/admin-dashboard"
-                 className="flex items-center space-x-4 block py-2.5 px-4 rounded">
-                <FaUsers />
-                <span>Employee</span>
-
-                </NavLink>
-                <NavLink to="/admin-dashboard/departments"
-                className={({isActive}) => `${isActive ? "bg-teal-500 " :  " "}flex items-center space-x-4 block py-2.5 px-4 rounded` }>
-                <FaBuilding />
-                <span>Department</span>
+            <nav className="mt-6">
+                {/* رابط الرئيسية - الملخص */}
+                <NavLink to="/admin-dashboard" end className={({ isActive }) => 
+                    `flex items-center p-4 hover:bg-teal-800 transition ${isActive ? 'bg-teal-700 border-r-4 border-yellow-500 text-yellow-500' : ''}`
+                }>
+                    <FaTachometerAlt className="ml-3" />
+                    <span className="font-bold">لوحة الإحصائيات</span>
                 </NavLink>
 
-                <NavLink to="/admin-dashboard"
-                 className="flex items-center space-x-4 block py-2.5 px-4 rounded">
-                <FaCalendarAlt />
-                <span>Leave</span>
+                {/* رابط البيانات العسكرية - الشغل الأساسي */}
+                <NavLink to="/admin-dashboard/military-data" className={({ isActive }) => 
+                    `flex items-center p-4 hover:bg-teal-800 transition ${isActive ? 'bg-teal-700 border-r-4 border-yellow-500 text-yellow-500' : ''}`
+                }>
+                    <FaUserShield className="ml-3" />
+                    <span className="font-bold">سجل البيانات العسكرية</span>
                 </NavLink>
 
-                <NavLink to="/admin-dashboard"
-                 className="flex items-center space-x-4 block py-2.5 px-4 rounded">
-                <FaMoneyBillWave />
-                <span>Salary</span>
-
-                </NavLink>
-                
-            </div>
+                {/* زر تسجيل الخروج في الأسفل */}
+                <div className="absolute bottom-0 w-full p-4 border-t border-teal-800">
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem("token");
+                            window.location.reload();
+                        }}
+                        className="flex items-center text-red-400 hover:text-red-200 transition w-full"
+                    >
+                        <FaSignOutAlt className="ml-3" />
+                        <span className="font-bold">تسجيل الخروج</span>
+                    </button>
+                </div>
+            </nav>
         </div>
-        </div>
-    )
-}
+    );
+};
 
-export default AdminSidebar
+export default AdminSidebar;
