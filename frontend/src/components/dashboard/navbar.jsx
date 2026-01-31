@@ -1,22 +1,22 @@
 import React from 'react';
-import { useAuth } from '../../context/authContext';
+import { LogOut } from 'lucide-react'; // استيراد أيقونة الخروج لشكل احترافي
 
 const Navbar = () => {
-    const { user } = useAuth();
+    const handleLogout = () => {
+        // منطق تسجيل الخروج الخاص بك
+        console.log("Logout triggered");
+    };
 
     return (
-        <div className="flex items-center justify-between h-16 bg-white px-10 shadow-md" dir="rtl">
-            <div className="font-bold text-teal-900 text-lg">
-                مرحباً بك، {user ? user.name : 'قائد الوحدة'}
-            </div>
+        <div className="flex items-center gap-4">
+            {/* تم إزالة "مرحبا أدمن" من هنا بناءً على طلبك السابق */}
+            
             <button 
-                className="bg-teal-700 text-white px-4 py-1 rounded hover:bg-teal-900 transition"
-                onClick={() => {
-                    localStorage.removeItem("token");
-                    window.location.reload();
-                }}
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-[#0f1b18] hover:bg-black text-yellow-500 border border-yellow-600/50 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] hover:shadow-yellow-600/20 active:scale-95 group"
             >
-                تسجيل الخروج
+                <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+                <span>تسجيل الخروج</span>
             </button>
         </div>
     );

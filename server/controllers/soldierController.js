@@ -1,47 +1,53 @@
-import Soldier from '../models/Soldier.js';
+import Soldier from "../models/Soldier.js";
 
-// 1. إضافة (Create)
-export const addSoldier = async (req, res) => {
+// 1. إضافة أو تحديث البيانات العسكرية الأساسية
+export const addMilitaryData = async (req, res) => {
     try {
+        const { militaryId } = req.body;
+
+        // البحث إذا كان الجندي موجود مسبقاً
+        let soldier = await Soldier.findOne({ militaryId });
+
+        if (soldier) {
+            // تحديث البيانات إذا كان موجوداً
+            soldier = await Soldier.findOneAndUpdate({ militaryId }, req.body, { new: true });
+            return res.status(200).json({ success: true, message: "تم تحديث البيانات العسكرية", soldier });
+        }
+
+        // إنشاء سجل جديد إذا لم يكن موجوداً
         const newSoldier = new Soldier(req.body);
         await newSoldier.save();
-        res.status(200).json({ success: true, message: "تم الحفظ" });
-    } catch (err) {
-        res.status(500).json({ success: false, error: "الرقم العسكري مسجل مسبقاً" });
+        res.status(201).json({ success: true, message: "تم حفظ بيانات المحارب بنجاح", soldier: newSoldier });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "خطأ في حفظ البيانات العسكرية" });
     }
 };
 
-// 2. بحث وقراءة (Read/Search)
-export const getSoldier = async (req, res) => {
+// 2. إضافة أو تحديث البيانات الشخصية (ربط بالرقم العسكري)
+export const updatePersonalData = async (req, res) => {
     try {
-        const soldier = await Soldier.findOne({ militaryId: req.params.id });
-        if (!soldier) return res.status(404).json({ success: false, message: "غير موجود" });
-        res.status(200).json({ success: true, soldier });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
-};
+        const { militaryId } = req.body;
 
-// 3. تعديل (Update)
-export const updateSoldier = async (req, res) => {
-    try {
-        const updated = await Soldier.findOneAndUpdate(
-            { militaryId: req.params.id }, 
-            { $set: req.body }, 
-            { new: true }
+        // البحث عن الجندي بالرقم العسكري لتحديث بياناته الشخصية
+        const soldier = await Soldier.findOneAndUpdate(
+            { militaryId },
+            { $set: req.body }, // تحديث الحقول المرسلة فقط (الشخصية، العائلية، إلخ)
+            { new: true, runValidators: true }
         );
-        res.status(200).json({ success: true, updated });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
-};
 
-// 4. حذف (Delete)
-export const deleteSoldier = async (req, res) => {
-    try {
-        await Soldier.findOneAndDelete({ militaryId: req.params.id });
-        res.status(200).json({ success: true, message: "تم الحذف" });
-    } catch (err) {
-        res.status(500).json({ success: false });
+        if (!soldier) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "لم يتم العثور على سجل عسكري بهذا الرقم. برجاء إدخال البيانات العسكرية أولاً." 
+            });
+        }
+
+        res.status(200).json({ success: true, message: "تم تحديث السجل الشخصي والاجتماعي بنجاح", soldier });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "خطأ في تحديث البيانات الشخصية" });
     }
 };
