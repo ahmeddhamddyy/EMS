@@ -5,6 +5,7 @@ import {
   updatePersonalData,
   getSoldierStats,
   searchSoldiers,
+  getFullReport,
 } from "../controllers/soldierController.js";
 
 // حذفنا استيراد authMiddleware لأنه لم يعد مطلوباً في النسخة الأوفلاين ✅
@@ -17,5 +18,6 @@ router.get("/search", searchSoldiers);
 router.post("/add", addSoldier);
 router.post("/update-career", updateCareerData);
 router.post("/add-personal", updatePersonalData);
+router.get("/full-report/:id", getFullReport);
 
 export default router;
