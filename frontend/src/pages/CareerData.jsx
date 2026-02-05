@@ -1,415 +1,231 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import {
-  Award,
-  Landmark,
-  GraduationCap,
-  Gavel,
-  Plus,
-  Trash2,
-  Save,
-  FileText,
+import { 
+  Medal, Gavel, Award, ClipboardCheck, Plus, 
+  Trash2, Save, Loader2, Calendar, Star 
 } from "lucide-react";
 
 const CareerData = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const passedId = location.state?.militaryId || "";
+  const militaryId = location.state?.militaryId;
+  const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    militaryId: passedId,
-    promotions: [{ rank: "", date: "", orderNumber: "" }],
-    units: [
-      {
-        unitName: "",
-        fromDate: "",
-        toDate: "",
-        role: "",
-        joinOrder: "",
-        endOrder: "",
-      },
-    ],
-    courses: [{ courseName: "", place: "", grade: "", date: "" }],
-    penalties: [{ penaltyType: "", reason: "", authority: "", date: "" }],
-    efficiencyReports: [{ year: "", rating: "", notes: "" }],
-  });
+  const officerRanks = ["ملازم", "ملازم أول", "نقيب", "رائد", "مقدم", "عقيد", "عميد", "لواء"];
 
-  const handleNestedChange = (index, section, field, value) => {
-    const updatedSection = [...formData[section]];
-    updatedSection[index][field] = value;
-    setFormData({ ...formData, [section]: updatedSection });
+  const [penalties, setPenalties] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [efficiencyReports, setEfficiencyReports] = useState([]);
+
+  // --- دوال إضافة البيانات ---
+  const addPenalty = () => {
+    setPenalties([...penalties, { 
+      date: "", details: "", penaltyType: "", orderNumber: "", orderDate: "", 
+      fromDate: "", toDate: "", 
+      issuingOfficer: { rank: "ملازم", name: "", job: "" } 
+    }]);
   };
 
-  const addField = (section, template) => {
-    setFormData({ ...formData, [section]: [...formData[section], template] });
+  const addCourse = () => {
+    setCourses([...courses, { courseName: "", place: "", fromDate: "", toDate: "", orderNumber: "" }]);
   };
 
-  const removeField = (index, section) => {
-    const updatedSection = formData[section].filter((_, i) => i !== index);
-    setFormData({ ...formData, [section]: updatedSection });
+  const addEfficiency = () => {
+    setEfficiencyReports([...efficiencyReports, { 
+      year: new Date().getFullYear(), percentage: "", rating: "امتياز", 
+      directOfficer: { rank: "نقيب", name: "" }, 
+      approvingOfficer: { rank: "مقدم", name: "" } 
+    }]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:5000/api/soldier/update-career",
-        formData
-      );
+      const res = await axios.post("http://localhost:5000/api/soldier/update-career", {
+        militaryId,
+        penalties,
+        courses,
+        efficiencyReports
+      });
       if (res.data.success) {
-        alert("🎉 اكتمل تسجيل ملف المحارب بنجاح!");
-        navigate("/admin-dashboard/search-soldier");
+        alert("✅ تم تحديث السجل الوظيفي والانضباطي بنجاح");
+        navigate("/admin-dashboard");
       }
     } catch (err) {
-      alert("❌ فشل في حفظ البيانات");
+      alert("❌ خطأ في عملية الحفظ");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#eaeeed] p-6 text-right font-sans"
-      dir="rtl"
+    <div className="p-8 text-right font-sans bg-gray-50 min-h-screen" dir="rtl">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="bg-[#1a2e2a] p-8 rounded-[2.5rem] border-b-8 border-yellow-600 text-white shadow-2xl flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-black italic flex items-center gap-4">
+              <Medal className="text-yellow-500" size={40} /> السجل الوظيفي والتقارير السنوية
+            </h2>
+            <p className="mt-2 text-yellow-500 font-bold">إدخال بيانات المحارب رقم عسكري: {militaryId}</p>
+          </div>
+          <ClipboardCheck size={60} className="opacity-20" />
+        </div>
+
+        {/* 1. قسم الجزاءات (Paragraph وبند الأوامر 5 أرقام) ✅ */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-red-50">
+          <div className="flex justify-between items-center border-b-4 border-red-600 pb-4 mb-6">
+            <h3 className="text-2xl font-black text-red-900 flex items-center gap-2"><Gavel /> سجل الجزاءات</h3>
+            <button type="button" onClick={addPenalty} className="bg-red-600 text-white px-5 py-2 rounded-2xl font-black flex items-center gap-2 hover:bg-red-700">
+              <Plus size={20} /> إضافة جزاء
+            </button>
+          </div>
+          {penalties.map((p, i) => (
+            <div key={i} className="mb-8 p-6 bg-red-50/30 rounded-3xl border-2 border-red-100 relative">
+              <button onClick={() => setPenalties(penalties.filter((_, idx) => idx !== i))} className="absolute left-4 top-4 text-red-400 hover:text-red-700"><Trash2 size={24}/></button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div><label className="text-xs font-black">تاريخ العقوبة</label><input type="date" className="w-full p-3 rounded-xl border-2" value={p.date} onChange={(e) => {const n = [...penalties]; n[i].date = e.target.value; setPenalties(n);}} /></div>
+                <div><label className="text-xs font-black">العقوبة الموقعة</label><input type="text" className="w-full p-3 rounded-xl border-2" placeholder="مثال: حبس 48 ساعة" value={p.penaltyType} onChange={(e) => {const n = [...penalties]; n[i].penaltyType = e.target.value; setPenalties(n);}} /></div>
+                <div><label className="text-xs font-black">بند الأوامر (5 أرقام) *</label><input type="text" maxLength="5" className="w-full p-3 rounded-xl border-2" placeholder="00000" value={p.orderNumber} onChange={(e) => {const n = [...penalties]; n[i].orderNumber = e.target.value; setPenalties(n);}} /></div>
+              </div>
+              <textarea rows="4" className="w-full p-4 rounded-2xl border-2 mb-4 font-bold" placeholder="نص العقوبة التفصيلي (Paragraph)..." value={p.details} onChange={(e) => {const n = [...penalties]; n[i].details = e.target.value; setPenalties(n);}}></textarea>
+              <div className="bg-white p-4 rounded-2xl border border-red-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <p className="md:col-span-3 text-xs font-black text-red-900">بيانات الضابط الآمر بالعقوبة:</p>
+                <select className="p-2 border rounded-xl font-bold" value={p.issuingOfficer.rank} onChange={(e) => {const n = [...penalties]; n[i].issuingOfficer.rank = e.target.value; setPenalties(n);}}>
+                  {officerRanks.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <input placeholder="الاسم" className="p-2 border rounded-xl font-bold" onChange={(e) => {const n = [...penalties]; n[i].issuingOfficer.name = e.target.value; setPenalties(n);}} />
+                <input placeholder="الوظيفة" className="p-2 border rounded-xl font-bold" onChange={(e) => {const n = [...penalties]; n[i].issuingOfficer.job = e.target.value; setPenalties(n);}} />
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* 2. الفرق التعليمية (مكان الانعقاد والتواريخ وبند الأوامر) ✅ */}
+        {/* --- 2. قسم الفرق التعليمية (إضافة عناوين التواريخ) ✅ --- */}
+<section className="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-blue-50">
+  <div className="flex justify-between items-center border-b-4 border-blue-600 pb-4 mb-6">
+    <h3 className="text-2xl font-black text-blue-900 flex items-center gap-2">
+      <Award /> الفرق التعليمية والحتمية
+    </h3>
+    <button 
+      type="button" 
+      onClick={addCourse} 
+      className="bg-blue-600 text-white px-5 py-2 rounded-2xl font-black flex items-center gap-2 hover:bg-blue-700 transition-all"
     >
-      <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
-        <div className="bg-[#1a2e2a] p-6 rounded-2xl shadow-lg border-b-4 border-yellow-600 flex justify-between items-center">
-          <label className="text-yellow-500 font-black block underline italic">
-            3. السجل الوظيفي والانضباطي للمحارب رقم: {formData.militaryId}
-          </label>
-          <input
-            className="p-3 rounded-xl font-black text-xl outline-none bg-gray-100 border-2 border-yellow-600/50 w-64 text-center"
-            value={formData.militaryId}
-            readOnly
+      <Plus size={20} /> إضافة فرقة
+    </button>
+  </div>
+
+  {courses.map((c, i) => (
+    <div key={i} className="mb-6 bg-blue-50/50 p-6 rounded-3xl border border-blue-100 relative group">
+      <button 
+        onClick={() => setCourses(courses.filter((_, idx) => idx !== i))} 
+        className="absolute left-4 top-4 text-blue-400 hover:text-red-600 transition-colors"
+      >
+        <Trash2 size={20}/>
+      </button>
+
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        {/* اسم الفرقة */}
+        <div className="md:col-span-1">
+          <label className="block text-[11px] font-black text-blue-800 mb-1">اسم الفرقة</label>
+          <input 
+            placeholder="مثال: قادة فصائل" 
+            className="w-full p-2 rounded-xl border-2 border-gray-200 font-bold outline-none focus:border-blue-500" 
+            onChange={(e) => {const n = [...courses]; n[i].courseName = e.target.value; setCourses(n);}} 
           />
         </div>
 
-        <SectionLayout
-          title="الترقي والعزل"
-          icon={<Award className="text-yellow-600" size={30} />}
-          color="border-yellow-600"
-          onAdd={() =>
-            addField("promotions", { rank: "", date: "", orderNumber: "" })
-          }
-        >
-          {formData.promotions.map((item, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-yellow-50 p-4 rounded-xl relative mb-2"
-            >
-              <input
-                placeholder="الرتبة"
-                value={item.rank}
-                onChange={(e) =>
-                  handleNestedChange(
-                    index,
-                    "promotions",
-                    "rank",
-                    e.target.value
-                  )
-                }
-                className="p-2 border rounded-lg font-bold"
-              />
-              <input
-                type="date"
-                value={item.date}
-                onChange={(e) =>
-                  handleNestedChange(
-                    index,
-                    "promotions",
-                    "date",
-                    e.target.value
-                  )
-                }
-                className="p-2 border rounded-lg"
-              />
-              <input
-                placeholder="رقم الأمر"
-                value={item.orderNumber}
-                onChange={(e) =>
-                  handleNestedChange(
-                    index,
-                    "promotions",
-                    "orderNumber",
-                    e.target.value
-                  )
-                }
-                className="p-2 border rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={() => removeField(index, "promotions")}
-                className="text-red-600 hover:bg-red-100 p-2 rounded-lg bg-white shadow-sm border border-red-100"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          ))}
-        </SectionLayout>
-
-        <SectionLayout
-          title="الوحدات وجهات الخدمة"
-          icon={<Landmark className="text-blue-700" size={30} />}
-          color="border-blue-700"
-          onAdd={() =>
-            addField("units", {
-              unitName: "",
-              fromDate: "",
-              toDate: "",
-              role: "",
-              joinOrder: "",
-              endOrder: "",
-            })
-          }
-        >
-          {formData.units.map((item, index) => (
-            <div
-              key={index}
-              className="space-y-3 bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm mb-4"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input
-                  placeholder="اسم الوحدة"
-                  value={item.unitName}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      index,
-                      "units",
-                      "unitName",
-                      e.target.value
-                    )
-                  }
-                  className="p-2 border rounded-lg font-bold border-blue-200 outline-none"
-                />
-                <input
-                  placeholder="الوظيفة داخل الوحدة"
-                  value={item.role}
-                  onChange={(e) =>
-                    handleNestedChange(index, "units", "role", e.target.value)
-                  }
-                  className="p-2 border rounded-lg border-blue-200 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeField(index, "units")}
-                  className="hidden md:flex text-red-600 bg-white border border-red-100 rounded-lg p-2 items-center justify-center hover:bg-red-50"
-                >
-                  <Trash2 size={18} /> حذف
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-blue-800 mb-1">
-                    تاريخ الضم
-                  </label>
-                  <input
-                    type="date"
-                    value={item.fromDate}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        index,
-                        "units",
-                        "fromDate",
-                        e.target.value
-                      )
-                    }
-                    className="p-2 border rounded-lg border-blue-200"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-blue-800 mb-1">
-                    تاريخ الإنهاء
-                  </label>
-                  <input
-                    type="date"
-                    value={item.toDate}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        index,
-                        "units",
-                        "toDate",
-                        e.target.value
-                      )
-                    }
-                    className="p-2 border rounded-lg border-blue-200"
-                  />
-                </div>
-                <input
-                  placeholder="أمر الضم رقم"
-                  value={item.joinOrder}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      index,
-                      "units",
-                      "joinOrder",
-                      e.target.value
-                    )
-                  }
-                  className="mt-5 p-2 border rounded-lg"
-                />
-                <input
-                  placeholder="أمر الإنهاء رقم"
-                  value={item.endOrder}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      index,
-                      "units",
-                      "endOrder",
-                      e.target.value
-                    )
-                  }
-                  className="mt-5 p-2 border rounded-lg"
-                />
-              </div>
-            </div>
-          ))}
-        </SectionLayout>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SectionLayout
-            title="الفرق التعليمية"
-            icon={<GraduationCap size={30} />}
-            color="border-purple-700"
-            onAdd={() =>
-              addField("courses", {
-                courseName: "",
-                place: "",
-                grade: "",
-                date: "",
-              })
-            }
-          >
-            {formData.courses.map((item, index) => (
-              <div
-                key={index}
-                className="flex flex-col gap-2 bg-purple-50 p-3 rounded-xl shadow-sm mb-2"
-              >
-                <input
-                  placeholder="اسم الفرقة"
-                  value={item.courseName}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      index,
-                      "courses",
-                      "courseName",
-                      e.target.value
-                    )
-                  }
-                  className="p-2 border rounded-lg"
-                />
-                <div className="flex gap-2">
-                  <input
-                    placeholder="التقدير"
-                    value={item.grade}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        index,
-                        "courses",
-                        "grade",
-                        e.target.value
-                      )
-                    }
-                    className="w-1/2 p-2 border rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeField(index, "courses")}
-                    className="w-1/2 text-red-600 border rounded-lg bg-white shadow-sm border-red-100"
-                  >
-                    حذف
-                  </button>
-                </div>
-              </div>
-            ))}
-          </SectionLayout>
-
-          <SectionLayout
-            title="تقارير الكفاءة السنوية"
-            icon={<FileText size={30} />}
-            color="border-green-600"
-            onAdd={() =>
-              addField("efficiencyReports", { year: "", rating: "", notes: "" })
-            }
-          >
-            {formData.efficiencyReports.map((item, index) => (
-              <div
-                key={index}
-                className="flex flex-col gap-2 bg-green-50 p-3 rounded-xl border border-green-100 shadow-sm mb-2"
-              >
-                <div className="flex gap-2">
-                  <input
-                    placeholder="السنة"
-                    value={item.year}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        index,
-                        "efficiencyReports",
-                        "year",
-                        e.target.value
-                      )
-                    }
-                    className="w-1/3 p-2 border rounded-lg"
-                  />
-                  <input
-                    placeholder="الدرجة"
-                    value={item.rating}
-                    onChange={(e) =>
-                      handleNestedChange(
-                        index,
-                        "efficiencyReports",
-                        "rating",
-                        e.target.value
-                      )
-                    }
-                    className="w-2/3 p-2 border rounded-lg"
-                  />
-                </div>
-                <input
-                  placeholder="ملاحظات"
-                  value={item.notes}
-                  onChange={(e) =>
-                    handleNestedChange(
-                      index,
-                      "efficiencyReports",
-                      "notes",
-                      e.target.value
-                    )
-                  }
-                  className="p-2 border rounded-lg"
-                />
-              </div>
-            ))}
-          </SectionLayout>
+        {/* مكان الانعقاد */}
+        <div>
+          <label className="block text-[11px] font-black text-blue-800 mb-1">مكان الانعقاد</label>
+          <input 
+            placeholder="مثال: معهد الإشارة" 
+            className="w-full p-2 rounded-xl border-2 border-gray-200 font-bold outline-none focus:border-blue-500" 
+            onChange={(e) => {const n = [...courses]; n[i].place = e.target.value; setCourses(n);}} 
+          />
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-[#1a2e2a] text-yellow-500 py-6 rounded-3xl font-black text-2xl shadow-2xl flex items-center justify-center gap-4 hover:bg-black transition-all border-b-8 border-yellow-700 active:scale-95 transition-transform"
-        >
-          <Save size={32} /> إغــلاق مـلف الـمحارب والـعودة للـبحث ✅
+        {/* تاريخ البدء ✅ */}
+        <div>
+          <label className="block text-[11px] font-black text-green-700 mb-1">من تاريخ (بدء)</label>
+          <input 
+            type="date" 
+            className="w-full p-2 rounded-xl border-2 border-gray-200 font-bold outline-none focus:border-green-500 bg-white" 
+            onChange={(e) => {const n = [...courses]; n[i].fromDate = e.target.value; setCourses(n);}} 
+          />
+        </div>
+
+        {/* تاريخ الانتهاء ✅ */}
+        <div>
+          <label className="block text-[11px] font-black text-red-700 mb-1">إلى تاريخ (انتهاء)</label>
+          <input 
+            type="date" 
+            className="w-full p-2 rounded-xl border-2 border-gray-200 font-bold outline-none focus:border-red-500 bg-white" 
+            onChange={(e) => {const n = [...courses]; n[i].toDate = e.target.value; setCourses(n);}} 
+          />
+        </div>
+
+        {/* بند الأوامر */}
+        <div>
+          <label className="block text-[11px] font-black text-blue-800 mb-1">بند الأوامر</label>
+          <input 
+            placeholder="00000" 
+            className="w-full p-2 rounded-xl border-2 border-gray-200 font-bold outline-none focus:border-blue-500" 
+            onChange={(e) => {const n = [...courses]; n[i].orderNumber = e.target.value; setCourses(n);}} 
+          />
+        </div>
+      </div>
+    </div>
+  ))}
+</section>
+
+        {/* 3. تقارير الكفاءة السنوية (سنة، نسبة، تقدير، ضباط) ✅ */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-green-50">
+          <div className="flex justify-between items-center border-b-4 border-green-600 pb-4 mb-6">
+            <h3 className="text-2xl font-black text-green-900 flex items-center gap-2"><Star /> تقارير الكفاءة السنوية</h3>
+            <button type="button" onClick={addEfficiency} className="bg-green-600 text-white px-5 py-2 rounded-2xl font-black flex items-center gap-2 hover:bg-green-700"><Plus size={20} /> إضافة تقرير</button>
+          </div>
+          {efficiencyReports.map((r, i) => (
+            <div key={i} className="bg-green-50/50 p-6 rounded-3xl border border-green-100 mb-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input placeholder="السنة" className="p-2 rounded-xl border font-bold" value={r.year} onChange={(e) => {const n = [...efficiencyReports]; n[i].year = e.target.value; setEfficiencyReports(n);}} />
+                <input placeholder="النسبة المئوية" className="p-2 rounded-xl border font-bold" onChange={(e) => {const n = [...efficiencyReports]; n[i].percentage = e.target.value; setEfficiencyReports(n);}} />
+                <select className="p-2 rounded-xl border font-bold" onChange={(e) => {const n = [...efficiencyReports]; n[i].rating = e.target.value; setEfficiencyReports(n);}}>
+                  <option value="امتياز">امتياز</option><option value="جيد جداً">جيد جداً</option><option value="جيد">جيد</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border border-green-100">
+                <div>
+                  <label className="text-xs font-black">الضابط المباشر (رتبة واسم):</label>
+                  <div className="flex gap-2">
+                    <select className="p-2 border rounded-lg" onChange={(e) => {const n = [...efficiencyReports]; n[i].directOfficer.rank = e.target.value; setEfficiencyReports(n);}}>{officerRanks.map(rank => <option key={rank} value={rank}>{rank}</option>)}</select>
+                    <input className="w-full p-2 border rounded-lg" placeholder="الاسم" onChange={(e) => {const n = [...efficiencyReports]; n[i].directOfficer.name = e.target.value; setEfficiencyReports(n);}} />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-black">الضابط المصدق (رتبة واسم):</label>
+                  <div className="flex gap-2">
+                    <select className="p-2 border rounded-lg" onChange={(e) => {const n = [...efficiencyReports]; n[i].approvingOfficer.rank = e.target.value; setEfficiencyReports(n);}}>{officerRanks.map(rank => <option key={rank} value={rank}>{rank}</option>)}</select>
+                    <input className="w-full p-2 border rounded-lg" placeholder="الاسم" onChange={(e) => {const n = [...efficiencyReports]; n[i].approvingOfficer.name = e.target.value; setEfficiencyReports(n);}} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* زر الحفظ النهائي */}
+        <button onClick={handleSubmit} disabled={loading} className="w-full bg-[#1a2e2a] text-yellow-500 py-6 rounded-[2.5rem] font-black text-3xl hover:bg-black transition-all shadow-2xl border-b-8 border-yellow-700 flex items-center justify-center gap-4">
+          {loading ? <Loader2 className="animate-spin" size={35} /> : <><Save size={35} /> اعتماد وحفظ السجل الوظيفي</>}
         </button>
-      </form>
+      </div>
     </div>
   );
 };
-
-const SectionLayout = ({ title, icon, color, onAdd, children }) => (
-  <div
-    className={`bg-white p-6 rounded-3xl shadow-xl border-r-[12px] ${color}`}
-  >
-    <div className="flex justify-between items-center mb-6 border-b pb-4">
-      <h3 className="text-xl font-black flex items-center gap-2">
-        {icon} {title}
-      </h3>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl transition-all shadow-sm"
-      >
-        <Plus size={24} />
-      </button>
-    </div>
-    <div className="space-y-4">{children}</div>
-  </div>
-);
 
 export default CareerData;

@@ -1,23 +1,22 @@
 import express from "express";
 import {
-  addSoldier,
-  updateCareerData,
-  updatePersonalData,
+  addSoldier,           // تأكد من وجودها هنا ✅
   getSoldierStats,
   searchSoldiers,
   getFullReport,
+  getPenalizedSoldiers,
+  getSoldiersByCategory,
+  updateCareerData
 } from "../controllers/soldierController.js";
-
-// حذفنا استيراد authMiddleware لأنه لم يعد مطلوباً في النسخة الأوفلاين ✅
 
 const router = express.Router();
 
-// المسارات الآن مفتوحة مباشرة للفرونت إند بدون قيود
 router.get("/stats", getSoldierStats);
 router.get("/search", searchSoldiers);
-router.post("/add", addSoldier);
-router.post("/update-career", updateCareerData);
-router.post("/add-personal", updatePersonalData);
+router.post("/add", addSoldier); // تأكد من الربط هنا ✅
 router.get("/full-report/:id", getFullReport);
+router.get("/penalties-list", getPenalizedSoldiers);
+router.get("/category/:category", getSoldiersByCategory);
+router.post("/update-career", updateCareerData); // الرابط المستخدم في CareerData.jsx ✅
 
 export default router;
