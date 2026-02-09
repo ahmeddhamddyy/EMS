@@ -13,6 +13,7 @@ import CareerData from "./pages/CareerData";     // تأكد من وجود ال�
 import SoldierReport from "./pages/SoldierReport";
 import PenaltiesPage from "./pages/PenaltiesPage";
 import FullReport from "./pages/FullReport";
+import CategoryList from "./pages/CategoryList";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           {/* رابط التقرير والطباعة */}
           <Route path="report/:id" element={<SoldierReport />} />
           <Route path="full-report/:id" element={<FullReport />} />
+          <Route path="category/:category" element={<CategoryList />} />
         </Route>
       </Routes>
     </BrowserRouter>
