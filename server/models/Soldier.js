@@ -1,20 +1,19 @@
-// server/models/Soldier.js
 import mongoose from "mongoose";
 
 const soldierSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    militaryId: { 
-        type: String, 
-        required: true, 
-        unique: true, 
-        minlength: 13, // تعديل لـ 13 ✅
-        maxlength: 13 
-    },
+    militaryId: { type: String, required: true, unique: true },
     rankCategory: { type: String, required: true },
     rank: { type: String, required: true },
-    image: { type: String }, // إضافة حقل الصورة لاستقبال الـ Base64 ✅
     
-    // باقي الحقول التي أضفناها في الفرونت إند
+    // التعديل الجديد: تحديد قطاع التوزيع ✅
+    assignmentCategory: { 
+        type: String, 
+        required: true, 
+        enum: ['الكتيبة', 'الصوب', 'الكبائن'],
+        default: 'الكتيبة' 
+    },
+
     serviceType: String,
     serviceDuration: String,
     specialization: String,
@@ -30,13 +29,76 @@ const soldierSchema = new mongoose.Schema({
     missionTo: String,
     attachedFrom: String,
     attachedTo: String,
+    image: String,
     
-    // بيانات السجل الوظيفي والجزاءات (التي سنقوم ببرمجتها الآن)
+    // البيانات المدنية والبدنية
+    nationalId: String,
+    qualification: String,
+    bloodType: String,
+    jobBefore: String,
+    height: String,
+    weight: String,
+    chestSize: String,
+    address: String,
+    phone: String,
+    
+    // الموقف العائلي
+    spouse: {
+        name: String,
+        nationalId: String,
+        birthDate: String,
+        marriageDate: String
+    },
+    children: [{
+        name: String,
+        nationalId: String,
+        birthDate: String,
+        gender: String
+    }],
+    relatives: [{
+        name: String,
+        relation: String,
+        nationalId: String,
+        phone: String
+    }],
+
+    // السجل الوظيفي والجزاءات
     careerHistory: {
-        penalties: Array,
-        courses: Array,
-        efficiencyReports: Array
+        penalties: [{
+            date: String,
+            fromDate: String,
+            toDate: String,
+            penaltyType: String,
+            details: String,
+            orderNumber: String,
+            issuingOfficer: {
+                rank: String,
+                name: String,
+                job: String
+            }
+        }],
+        courses: [{
+            courseName: String,
+            place: String,
+            fromDate: String,
+            toDate: String,
+            orderNumber: String
+        }],
+        efficiencyReports: [{
+            year: String,
+            percentage: String,
+            rating: String,
+            directOfficer: {
+                rank: String,
+                name: String
+            },
+            approvingOfficer: {
+                rank: String,
+                name: String
+            }
+        }]
     }
 }, { timestamps: true });
 
-export default mongoose.model("Soldier", soldierSchema);
+const Soldier = mongoose.model("Soldier", soldierSchema);
+export default Soldier;
