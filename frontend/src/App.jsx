@@ -1,19 +1,19 @@
-// App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// استيراد الصفحات (تأكد من صحة المسارات والأسماء عندك)
+// استيراد الصفحات
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSummary from "./components/dashboard/AdminSummary";
-import SearchPage from "./pages/SearchPage";
+import SearchSoldier from "./pages/SearchSoldier"; // الصفحة اللي عملناها بالتصميم الجديد ✅
 import MilitaryData from "./pages/MilitaryData";
-import PersonalData from "./pages/PersonalData"; // تأكد من وجود الملف
-import CareerData from "./pages/CareerData";     // تأكد من وجود الملف
-import SoldierReport from "./pages/SoldierReport";
+import PersonalData from "./pages/PersonalData"; 
+import CareerData from "./pages/CareerData";
 import PenaltiesPage from "./pages/PenaltiesPage";
-import FullReport from "./pages/FullReport";
+import FullReport from "./pages/FullReport"; // ورقة الطباعة الرسمية
 import CategoryList from "./pages/CategoryList";
+import ReserveNotebook from "./pages/ReserveNotebook";
+import SoldierProfile from "./pages/SoldierProfile"; // البروفايل الرقمي الشامل (الزيتي) ✅
 
 function App() {
   return (
@@ -25,18 +25,25 @@ function App() {
         {/* لوحة التحكم الرئيسية */}
         <Route path="/admin-dashboard" element={<AdminDashboard />}>
           <Route index element={<AdminSummary />} />
-          <Route path="search-soldier" element={<SearchPage />} />
           
-          {/* الروابط التي تسبب الخطأ حالياً - قمنا بإضافتها هنا ✅ */}
+          {/* مركز الاستعلام: تأكد أن المسار مطابق لما في الـ Sidebar ✅ */}
+          <Route path="search-soldier" element={<SearchSoldier />} />
+          
+          {/* إدخال البيانات */}
           <Route path="military-data" element={<MilitaryData />} />
           <Route path="personal-data" element={<PersonalData />} />
           <Route path="career-data" element={<CareerData />} />
-          <Route path="penalties-list" element={<PenaltiesPage />} /> {/* إضافة مسار الجزاءات ✅ */}
           
-          {/* رابط التقرير والطباعة */}
-          <Route path="report/:id" element={<SoldierReport />} />
-          <Route path="full-report/:id" element={<FullReport />} />
+          {/* السجلات والقوائم */}
+          <Route path="penalties-list" element={<PenaltiesPage />} />
+          <Route path="reserve-archive" element={<ReserveNotebook />} />
           <Route path="category/:category" element={<CategoryList />} />
+
+          {/* الملف الرقمي الشامل (الزيتي الذهبي - المشتملات) ✅ */}
+          <Route path="soldier-profile/:id" element={<SoldierProfile />} />
+
+          {/* التقرير الرسمي (الطباعة البيضاء) ✅ */}
+          <Route path="full-report/:id" element={<FullReport />} />
         </Route>
       </Routes>
     </BrowserRouter>

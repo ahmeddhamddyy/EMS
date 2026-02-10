@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Users, Heart, Ruler, Activity, Plus, Trash2, 
-  UserPlus, Fingerprint, Save, Loader2, Edit3
+  UserPlus, Fingerprint, Save, Loader2, Edit3, Award
 } from "lucide-react";
 
 const PersonalData = () => {
@@ -19,6 +19,7 @@ const PersonalData = () => {
     gender: "ذكر",
     religion: "مسلم",
     qualification: "عالي",
+    serviceDuration: "سنة واحدة", // القيمة الافتراضية للمؤهل العالي ✅
     jobBefore: "",
     birthDate: "",
     birthPlace: "",
@@ -35,6 +36,28 @@ const PersonalData = () => {
     children: [],
     relatives: [],
   });
+
+  // منطق الاحتساب التلقائي لمدة الخدمة بناءً على المؤهل الدراسي ✅
+  useEffect(() => {
+    let duration = "";
+    switch (formData.qualification) {
+      case "عالي":
+        duration = "سنة واحدة";
+        break;
+      case "فوق متوسط":
+        duration = "سنة ونصف";
+        break;
+      case "متوسط":
+        duration = "سنتان";
+        break;
+      case "عادي":
+        duration = "ثلاث سنوات";
+        break;
+      default:
+        duration = "غير محدد";
+    }
+    setFormData(prev => ({ ...prev, serviceDuration: duration }));
+  }, [formData.qualification]);
 
   useEffect(() => {
     if (passedData.editMode && passedData.soldierData) {
@@ -79,25 +102,25 @@ const PersonalData = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await axios.post("http://127.0.0.1:5000/api/soldier/update-personal", formData);
-      if (res.data.success) {
-        navigate("/admin-dashboard/career-data", {
-          state: { 
-            militaryId: formData.militaryId,
-            editMode: isEditMode,
-            soldierData: isEditMode ? passedData.soldierData : null
-          },
-        });
-      }
-    } catch (err) {
-      alert("❌ خطأ في الحفظ");
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+  setLoading(true);
+  try {
+    // التعديل دائماً بـ PUT وعلى رابط فيه الـ ID ✅
+    const res = await axios.put(`http://127.0.0.1:5000/api/soldier/update-personal/${formData.militaryId}`, formData);
+    
+    if (res.data.success) {
+      navigate("/admin-dashboard/career-data", {
+        state: { 
+          editMode: true, 
+          soldierData: res.data.soldier, 
+          currentStep: 3,
+          militaryId: formData.militaryId 
+        },
+      });
     }
-  };
+  } catch (err) { alert("❌ خطأ في تحديث البيانات الشخصية"); } 
+  finally { setLoading(false); }
+};
 
   return (
     <div className="min-h-screen bg-[#eaeeed] p-4 md:p-8 text-right font-sans" dir="rtl">
@@ -124,6 +147,22 @@ const PersonalData = () => {
                 <label className="text-[10px] font-black text-gray-500 mb-1 block">الاسم الكامل</label>
                 <input name="fullName" value={formData.fullName} onChange={handleChange} className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none" required />
               </div>
+
+              {/* قسم المؤهل ومدة الخدمة التلقائية ✅ */}
+              <div>
+                <label className="text-[10px] font-black text-gray-500 mb-1 block">المؤهل الدراسي</label>
+                <select name="qualification" value={formData.qualification} onChange={handleChange} className="w-full p-3 bg-white border-2 border-yellow-500 rounded-xl font-black text-[#1a2e2a] outline-none shadow-sm">
+                  <option value="عالي">عالي (جامعي)</option>
+                  <option value="فوق متوسط">فوق متوسط</option>
+                  <option value="متوسط">متوسط (دبلوم/ثانوي)</option>
+                  <option value="عادي">عادي (بدون مؤهل)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-blue-600 mb-1 block italic">مدة الخدمة (تلقائي) ⚖️</label>
+                <input name="serviceDuration" value={formData.serviceDuration} readOnly className="w-full p-3 bg-blue-50 border-2 border-blue-200 rounded-xl font-black text-blue-800 outline-none cursor-not-allowed" />
+              </div>
+
               <div>
                 <label className="text-[10px] font-black text-gray-500 mb-1 block">الرقم القومي</label>
                 <input name="nationalId" value={formData.nationalId} maxLength="14" onChange={handleChange} className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-bold outline-none" />
@@ -140,15 +179,6 @@ const PersonalData = () => {
                 <label className="text-[10px] font-black text-gray-500 mb-1 block">فصيلة الدم</label>
                 <select name="bloodType" value={formData.bloodType} onChange={handleChange} className="w-full p-3 bg-red-50 border-2 border-red-100 rounded-xl font-black text-red-600 outline-none">
                   {["A+", "O+", "B+", "AB+", "A-", "O-", "B-", "AB-"].map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-gray-500 mb-1 block">المؤهل الدراسي</label>
-                <select name="qualification" value={formData.qualification} onChange={handleChange} className="w-full p-3 bg-gray-50 border-2 border-gray-200 rounded-xl font-black text-[#1a2e2a] outline-none">
-                  <option value="عالي">عالي</option>
-                  <option value="فوق متوسط">فوق متوسط</option>
-                  <option value="متوسط">متوسط</option>
-                  <option value="عادي">عادي</option>
                 </select>
               </div>
             </div>
@@ -183,6 +213,7 @@ const PersonalData = () => {
           </div>
         </div>
 
+        {/* ... باقي الأقسام (الزوجة، الأبناء، الأقارب) تظل كما هي ... */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border-r-[12px] border-pink-700">
           <div className="flex items-center gap-3 mb-6 text-pink-900 border-b pb-4">
             <Heart size={35} fill="currentColor" />

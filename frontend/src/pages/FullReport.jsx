@@ -204,7 +204,7 @@ export default FullReport;
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Printer, Loader2, ArrowRight } from "lucide-react";
+import { Printer, Loader2, ArrowRight, Trash2, Edit3 } from "lucide-react"; 
 
 const FullReport = () => {
   const { id } = useParams();
@@ -223,8 +223,35 @@ const FullReport = () => {
     fetchFullData();
   }, [id]);
 
+  // دالة الحذف النهائي ✅
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("⚠️ تحذير: هل أنت متأكد من حذف سجل هذا المقاتل نهائياً من المنظومة؟ لا يمكن التراجع عن هذه الخطوة.");
+    if (confirmDelete) {
+      try {
+        const res = await axios.delete(`http://localhost:5000/api/soldier/delete/${id}`);
+        if (res.data.success) {
+          alert("✅ تم حذف السجل بنجاح");
+          navigate("/admin-dashboard");
+        }
+      } catch (err) {
+        alert("❌ فشل الحذف: تأكد من اتصال السيرفر");
+      }
+    }
+  };
+
+  // دالة بدء رحلة التعديل (المضافة) ✅
+  const handleStartEditFlow = () => {
+    navigate(`/admin-dashboard/military-data`, { 
+      state: { 
+        editMode: true, 
+        soldierData: soldier,
+        currentStep: 1 
+      } 
+    });
+  };
+
   if (loading) return <div className="h-screen flex items-center justify-center bg-white"><Loader2 className="animate-spin text-black" size={40} /></div>;
-  if (!soldier) return <div className="text-center p-20 font-bold">⚠️ السجل غير موجود</div>;
+  if (!soldier) return <div className="text-center p-20 font-bold text-red-600">⚠️ السجل غير موجود</div>;
 
   return (
     <div className="min-h-screen bg-gray-600 p-0 md:p-10 print:bg-white print:p-0" dir="rtl">
@@ -297,16 +324,36 @@ const FullReport = () => {
           }
           .header-table { border: none !important; }
           .header-table td { border: none !important; }
+          .status-indicator {
+            border: 1px solid black;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 5px;
+            display: inline-block;
+          }
         `}
       </style>
 
+      {/* شريط الأدوات العلوي - تم الحفاظ على التصميم مع إضافة زر التعديل فقط ✅ */}
       <div className="max-w-[210mm] mx-auto mb-4 flex justify-between no-print p-4 bg-white shadow-lg rounded-xl">
         <button onClick={() => navigate(-1)} className="font-bold flex items-center gap-2 text-[#1a2e2a]">
-           <ArrowRight size={18}/> العودة للمنظومة
+            <ArrowRight size={18}/> العودة للمنظومة
         </button>
-        <button onClick={() => window.print()} className="bg-black text-yellow-500 px-10 py-2 rounded-lg font-black flex items-center gap-2">
-          <Printer size={20} /> طباعة البيان الرسمي
-        </button>
+        <div className="flex gap-4">
+          {/* زر تعديل البيانات المضاف ✅ */}
+          <button onClick={handleStartEditFlow} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-black flex items-center gap-2 hover:bg-blue-800 transition-all">
+            <Edit3 size={20} /> تعديل البيانات
+          </button>
+
+          <button onClick={handleDelete} className="bg-red-600 text-white px-6 py-2 rounded-lg font-black flex items-center gap-2 hover:bg-red-800 transition-all">
+            <Trash2 size={20} /> حذف نهائي
+          </button>
+          
+          <button onClick={() => window.print()} className="bg-black text-yellow-500 px-10 py-2 rounded-lg font-black flex items-center gap-2">
+            <Printer size={20} /> طباعة البيان الرسمي
+          </button>
+        </div>
       </div>
 
       <div className="report-page shadow-2xl border border-gray-400 print:border-none">
@@ -314,19 +361,21 @@ const FullReport = () => {
 
         <div className="main-content flex flex-col h-full">
           
+          {/* تم إرجاع الهيدر الأصلي بأبعاده الأصلية ✅ */}
           <table className="header-table">
             <tbody>
               <tr>
                 <td style={{width: '33%'}} className="text-center font-bold">
                   <p>القوات المسلحة</p>
                   <p>قوات الحرس الجمهوري</p>
-                  <p>الكتيبةالخامسه </p>
+                  <p>الكتيبة الخامسة</p>
                 </td>
                 <td style={{width: '34%'}} className="text-center">
                   <h1 className="text-2xl font-black underline">بيان حالة مقاتل</h1>
+                  <div className="status-indicator">الموقف: {soldier.status || "بالخدمة"}</div>
                 </td>
                 <td style={{width: '33%'}} className="flex justify-center">
-                  {/* الحل النهائي للصورة: أبعاد طبيعية وملء احترافي ✅ */}
+                  {/* إرجاع أبعاد الصورة الأصلية 60x20 لضمان عدم تغيير الشكل ✅ */}
                   <div className="w-60 h-20 border-2 border-black bg-white flex items-center justify-center overflow-hidden shadow-sm">
                     {soldier.image ? (
                       <img 
@@ -335,7 +384,7 @@ const FullReport = () => {
                         style={{objectPosition: 'center 15%'}}
                         alt="soldier" 
                       />
-                    ) :  (
+                    ) : (
                       <span className="text-[10px]">بدون صورة</span>
                     )}
                   </div>
@@ -358,27 +407,49 @@ const FullReport = () => {
                 <td className="value tracking-widest">{soldier.militaryId}</td>
               </tr>
               <tr>
-                <td className="label">السلاح:</td>
-                <td className="value">{soldier.specialization}</td>
-                <td className="label">السرية:</td>
-                <td className="value">{soldier.companyPlatoon}</td>
+                <td className="label text-blue-800">قطاع التوزيع:</td>
+                <td className="value">{soldier.assignmentCategory || "الكتيبة"}</td>
+                <td className="label">ملاحظات الحالة:</td>
+                <td className="value font-bold text-sm">{soldier.statusNote || "موجود بالخدمة"}</td>
               </tr>
               <tr>
                 <td className="label">تاريخ الضم:</td>
                 <td className="value">{soldier.unitJoinDate || soldier.joinDate}</td>
-                <td className="label">تاريخ التسريح:</td>
-                <td className="value text-red-600 font-black">{soldier.dischargeDate}</td>
+                <td className="label text-red-700">تاريخ التسريح:</td>
+                <td className="value text-red-700 font-black underline">{soldier.dischargeDate}</td>
               </tr>
               <tr>
                 <td className="label">الرقم القومي:</td>
                 <td className="value">{soldier.nationalId}</td>
-                <td className="label">فصيلة الدم:</td>
-                <td className="value font-black text-red-700">{soldier.bloodType}</td>
+                <td className="label font-bold text-red-800">العنوان:</td>
+                <td className="value font-bold text-[11px]">{soldier.address || "---"}</td>
               </tr>
             </tbody>
           </table>
 
-          <div className="section-title">ثانياً: سجل الجزاءات (الانضباط)</div>
+          {(soldier.missionFrom || soldier.missionTo || soldier.attachedFrom || soldier.attachedTo) && (
+            <>
+              <div className="section-title">ثانياً: التحركات الخارجية (المأموريات والإلحاق)</div>
+              <table>
+                <tbody>
+                  {(soldier.missionFrom || soldier.missionTo) && (
+                    <tr>
+                      <td className="label">مأمورية من/على:</td>
+                      <td colSpan="3" className="value">{soldier.missionFrom || "---"} / {soldier.missionTo || "---"}</td>
+                    </tr>
+                  )}
+                  {(soldier.attachedFrom || soldier.attachedTo) && (
+                    <tr>
+                      <td className="label">ملحق من/على:</td>
+                      <td colSpan="3" className="value">{soldier.attachedFrom || "---"} / {soldier.attachedTo || "---"}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </>
+          )}
+
+          <div className="section-title">ثالثاً: سجل الجزاءات (الانضباط)</div>
           <table className="text-center">
             <thead>
               <tr className="bg-gray-100">
@@ -390,12 +461,12 @@ const FullReport = () => {
             </thead>
             <tbody>
               {soldier.careerHistory?.penalties?.length > 0 ? (
-                soldier.careerHistory.penalties.slice(-5).map((p, i) => (
+                soldier.careerHistory.penalties.slice(-4).map((p, i) => (
                   <tr key={i}>
-                    <td>{p.date}</td>
-                    <td className="font-bold">{p.penaltyType}</td>
-                    <td className="text-right text-[11px] pr-2 leading-tight">{p.details}</td>
-                    <td>{p.orderNumber}</td>
+                    <td className="text-[12px]">{p.date}</td>
+                    <td className="font-bold text-[12px]">{p.penaltyType}</td>
+                    <td className="text-right text-[11px] pr-2 leading-tight italic">"{p.details}"</td>
+                    <td className="text-[12px]">{p.orderNumber}</td>
                   </tr>
                 ))
               ) : (
@@ -405,33 +476,36 @@ const FullReport = () => {
           </table>
 
           <div className="flex gap-0 mt-2">
-             <table style={{width: '50%', margin: 0}}>
-                <thead><tr><th colSpan="3" className="bg-gray-100 border-b-0 text-[12px]">تقارير الكفاءة السنوية</th></tr></thead>
-                <tbody>
-                   {soldier.careerHistory?.efficiencyReports?.map((r, i) => (
-                      <tr key={i} className="text-center text-[11px]"><td>{r.year}</td><td>{r.percentage}%</td><td className="font-bold">{r.rating}</td></tr>
-                   ))}
-                </tbody>
-             </table>
-             <table style={{width: '50%', margin: 0}}>
-                <thead><tr><th colSpan="2" className="bg-gray-100 border-b-0 text-[12px]">الفرق الحتمية / التعليمية</th></tr></thead>
-                <tbody>
-                   {soldier.careerHistory?.courses?.map((c, i) => (
-                      <tr key={i} className="text-center text-[11px]"><td>{c.courseName}</td><td className="font-bold">{c.place}</td></tr>
-                   ))}
-                </tbody>
-             </table>
+            {soldier.careerHistory?.efficiencyReports?.length > 0 && (
+              <table style={{width: '50%', margin: 0}}>
+                 <thead><tr><th colSpan="3" className="bg-gray-100 border-b-0 text-[12px]">تقارير الكفاءة السنوية</th></tr></thead>
+                 <tbody>
+                    {soldier.careerHistory.efficiencyReports.map((r, i) => (
+                       <tr key={i} className="text-center text-[11px]"><td>{r.year}</td><td>{r.percentage}%</td><td className="font-bold">{r.rating}</td></tr>
+                    ))}
+                 </tbody>
+              </table>
+            )}
+            {soldier.careerHistory?.courses?.length > 0 && (
+              <table style={{width: '50%', margin: 0}}>
+                 <thead><tr><th colSpan="2" className="bg-gray-100 border-b-0 text-[12px]">الفرق الحتمية / التعليمية</th></tr></thead>
+                 <tbody>
+                    {soldier.careerHistory.courses.map((c, i) => (
+                       <tr key={i} className="text-center text-[11px]"><td>{c.courseName}</td><td className="font-bold">{c.place}</td></tr>
+                    ))}
+                 </tbody>
+              </table>
+            )}
           </div>
 
-          {/* التوقيعات مضبوطة في مكانها الصحيح */}
-          <div className="mt-auto pt-12 grid grid-cols-2 text-center pb-8">
+          <div className="mt-auto pt-10 grid grid-cols-2 text-center pb-6">
             <div className="font-bold">
-              <p className=" mb-12">مساعد تعليم /</p>
-              <p>( ........................................ )</p>
+              <p className=" mb-10 text-sm">مساعد تعليم /</p>
+              <p className="text-xs font-normal">( ........................................ )</p>
             </div>
             <div className="font-bold">
-              <p className=" mb-12 text-red-800">قائد الكتيبة ٥  </p>
-              <p>عقيد / ( ............................ )</p>
+              <p className=" mb-10 text-sm italic">قائد الكتيبة ٥ </p>
+              <p className="text-sm">عقيد / ( ............................ )</p>
             </div>
           </div>
 
