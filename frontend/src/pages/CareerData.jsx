@@ -52,24 +52,25 @@ const CareerData = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    const res = await axios.post("http://localhost:5000/api/soldier/update-career", {
-      militaryId,
-      penalties,
-      courses,
-      efficiencyReports
-    });
-    
-    if (res.data.success) {
-      alert("✅ تم تحديث سجل المقاتل بالكامل بنجاح");
-      // العودة النهائية للتقرير الرسمي ✅
-      navigate(`/admin-dashboard/full-report/${militaryId}`);
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.post("http://localhost:5000/api/soldier/update-career", {
+        militaryId,
+        penalties,
+        courses,
+        efficiencyReports
+      });
+      if (res.data.success) {
+        alert(isEditMode ? "✅ تم تحديث السجل بنجاح" : "✅ تم حفظ السجل بنجاح");
+        navigate(`/admin-dashboard/full-report/${militaryId}`);
+      }
+    } catch (err) {
+      alert("❌ خطأ في عملية الحفظ");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) { alert("❌ خطأ في حفظ السجل الوظيفي"); } 
-  finally { setLoading(false); }
-};
+  };
 
   return (
     <div className="p-8 text-right font-sans bg-gray-50 min-h-screen" dir="rtl">

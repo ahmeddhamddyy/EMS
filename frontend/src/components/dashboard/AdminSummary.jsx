@@ -36,24 +36,21 @@ const AdminSummary = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/soldier/stats");
+        console.log("Attempting to fetch stats from 127.0.0.1:5000...");
+        
+        const res = await axios.get("http://127.0.0.1:5000/api/soldier/stats", {
+          timeout: 5000 // لو مردش في 5 ثواني يقطع ✅
+        });
+
         if (res.data.success) {
-          setStats({
-            officers: res.data.officers || 0,
-            sergeants: res.data.sergeants || 0,
-            soldiers: res.data.soldiers || 0,
-            total: res.data.total || 0,
-            onMission: res.data.onMission || 0,
-            attachedFrom: res.data.attachedFrom || 0,
-            greenhouses: res.data.greenhouses || 0,
-            cabins: res.data.cabins || 0,
-            totalReserve: res.data.totalReserve || 0, // استقبال القيمة من الباك ✅
-          });
+          setStats(res.data);
         }
       } catch (err) {
-        console.error("خطأ في جلب الإحصائيات:", err);
+        console.error("❌ Error details:", err);
+        // تنبيه للمستخدم لو السيرفر مش شغال
+        alert("تنبيه: السيرفر لا يستجيب. تأكد من تشغيل Terminal السيرفر.");
       } finally {
-        setLoading(false);
+        setLoading(false); // دي اللي بتوقف الـ Loading مهما حصل ✅
       }
     };
     fetchStats();
