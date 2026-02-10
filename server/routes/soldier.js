@@ -24,6 +24,7 @@ router.get("/category/:category", getSoldiersByCategory);
 router.post("/add", addSoldier); 
 router.post("/update-personal", updatePersonalData); 
 router.post("/update-career", updateCareerData); 
-router.delete("/delete/:id", deleteSoldier); // هنا مكانها الصحيح ✅
+router.put("/update-personal/:militaryId", updatePersonalData);
+router.delete("/delete/:id", deleteSoldier);
 
 export default router;

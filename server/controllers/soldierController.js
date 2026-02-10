@@ -25,33 +25,18 @@ export const addSoldier = async (req, res) => {
 
 export const updatePersonalData = async (req, res) => {
     try {
-        const { militaryId, ...personalData } = req.body;
-
-        // التعديل هنا: استخدام findOneAndUpdate مع $set لتحديث البيانات الموجودة فقط
+        const { militaryId } = req.params; 
         const updatedSoldier = await Soldier.findOneAndUpdate(
-            { militaryId }, // البحث بالرقم العسكري (الذي قفلناه في الفرونت إند)
-            { $set: personalData }, 
-            { 
-                new: true,           // إرجاع المستند بعد التعديل
-                runValidators: true, // التأكد من أن البيانات تطابق الموديل
-                upsert: false        // لا تنشئ سجلاً جديداً إذا لم تجده (للأمان)
-            }
+            { militaryId: militaryId },
+            { $set: req.body }, 
+            { new: true, runValidators: true }
         );
 
-        if (!updatedSoldier) {
-            return res.status(404).json({ 
-                success: false, 
-                error: "لم يتم العثور على السجل العسكري المطلوب تعديله" 
-            });
-        }
+        if (!updatedSoldier) return res.status(404).json({ success: false, error: "المقاتل غير موجود" });
 
-        res.status(200).json({ 
-            success: true, 
-            message: "تم تحديث البيانات بنجاح",
-            soldier: updatedSoldier 
-        });
+        res.status(200).json({ success: true, message: "تم تحديث سجل الأداء بنجاح", soldier: updatedSoldier });
     } catch (error) {
-        res.status(500).json({ success: false, error: "خطأ أثناء التحديث: " + error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
 
@@ -59,19 +44,17 @@ export const updatePersonalData = async (req, res) => {
 export const updateCareerData = async (req, res) => {
     try {
         const { militaryId, penalties, courses, efficiencyReports } = req.body;
-
         const updatedSoldier = await Soldier.findOneAndUpdate(
             { militaryId },
             {
                 $set: {
-                    "careerHistory.penalties": penalties, // سيتم وضع المصفوفة المعدلة بالكامل
+                    "careerHistory.penalties": penalties,
                     "careerHistory.courses": courses,
                     "careerHistory.efficiencyReports": efficiencyReports
                 }
             },
             { new: true }
         );
-
         if (!updatedSoldier) return res.status(404).json({ success: false });
         res.status(200).json({ success: true, message: "تم تحديث السجل الوظيفي بنجاح" });
     } catch (error) {
@@ -79,24 +62,47 @@ export const updateCareerData = async (req, res) => {
     }
 };
 
-// 4. جلب الإحصائيات (التمام)
+// 4. جلب الإحصائيات (تعديل لضمان دقة الأرقام مع البيانات القديمة ✅)
 export const getSoldierStats = async (req, res) => {
     try {
+        // نستخدم $ne: "رديف" لضمان حساب البيانات القديمة التي ليس لها حقل status ✅
+        const activeQuery = { status: { $ne: "رديف" } };
+
         const stats = {
-            total: await Soldier.countDocuments(),
-            officers: await Soldier.countDocuments({ rankCategory: "ضابط" }),
-            sergeants: await Soldier.countDocuments({ rankCategory: "صف" }),
-            soldiers: await Soldier.countDocuments({ rankCategory: "جندي" }),
-            onMission: await Soldier.countDocuments({ missionTo: { $ne: "", $exists: true } }),
-            attachedFrom: await Soldier.countDocuments({ attachedFrom: { $ne: "", $exists: true } }),
+            total: await Soldier.countDocuments(activeQuery),
+            officers: await Soldier.countDocuments({ ...activeQuery, rankCategory: "ضابط" }),
+            sergeants: await Soldier.countDocuments({ ...activeQuery, rankCategory: "صف" }),
+            soldiers: await Soldier.countDocuments({ ...activeQuery, rankCategory: "جندي" }),
+            greenhouses: await Soldier.countDocuments({ ...activeQuery, assignmentCategory: "الصوب" }),
+            cabins: await Soldier.countDocuments({ ...activeQuery, assignmentCategory: "الكبائن" }),
+            onMission: await Soldier.countDocuments({ ...activeQuery, missionTo: { $ne: "", $exists: true } }),
+            attachedFrom: await Soldier.countDocuments({ ...activeQuery, attachedFrom: { $ne: "", $exists: true } }),
+            totalReserve: await Soldier.countDocuments({ status: "رديف" })
         };
         res.status(200).json({ success: true, ...stats });
     } catch (error) {
-        res.status(500).json({ success: false, error: "خطأ في الإحصائيات" });
+        res.status(500).json({ success: false, error: "خطأ في جلب الإحصائيات" });
     }
 };
 
-// 5. البحث الذكي
+// وظيفة التسريح الجماعي
+export const dischargeBatch = async (req, res) => {
+    try {
+        const { dischargeDate } = req.body;
+        const result = await Soldier.updateMany(
+            { status: { $ne: "رديف" }, dischargeDate: dischargeDate },
+            { $set: { status: "رديف" } }
+        );
+        res.status(200).json({ 
+            success: true, 
+            message: `تم تسريح عدد ${result.modifiedCount} مقاتل بنجاح.` 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: "خطأ أثناء عملية التسريح" });
+    }
+};
+
+// 5. البحث الذكي (تعديل ليظهر الجميع ✅)
 export const searchSoldiers = async (req, res) => {
     try {
         const { query } = req.query;
@@ -106,35 +112,42 @@ export const searchSoldiers = async (req, res) => {
                 { name: { $regex: query, $options: "i" } },
                 { militaryId: { $regex: query, $options: "i" } },
             ],
-        }).limit(10);
+        }).limit(20); // زيادة الحد للبحث الشامل
         res.status(200).json({ success: true, soldiers });
     } catch (error) {
         res.status(500).json({ success: false, error: "خطأ في البحث" });
     }
 };
 
-// 6. جلب القائمة حسب الفئة (تم دمج منطق الملحقين والمأموريات هنا ✅)
+// 6. جلب القائمة حسب الفئة (التعديل الجوهري لظهور البيانات القديمة ✅)
 export const getSoldiersByCategory = async (req, res) => {
     try {
         const { category } = req.params;
-        let query = {};
+        // نغير الشرط ليكون "أي شخص ليس رديف" لضمان ظهور البيانات القديمة ✅
+        let query = { status: { $ne: "رديف" } };
 
         if (category === "onMission") {
-            query = { missionTo: { $ne: "", $exists: true } };
-        } else if (category === "attachedFrom" || category === "ملحق") {
-            query = { attachedFrom: { $ne: "", $exists: true } };
+            query.missionTo = { $ne: "", $exists: true };
+        } else if (category === "attachedFrom") {
+            query.attachedFrom = { $ne: "", $exists: true };
+        } else if (category === "الصوب") {
+            query.assignmentCategory = "الصوب";
+        } else if (category === "الكبائن") {
+            query.assignmentCategory = "الكبائن";
+        } else if (category === "رديف") {
+            query = { status: "رديف" }; // للأرشيف نلتزم بكلمة رديف فقط
         } else {
-            query = { rankCategory: category };
+            query.rankCategory = category;
         }
 
-        const list = await Soldier.find(query).select("name militaryId rank image specialization");
+        const list = await Soldier.find(query).select("name militaryId rank image specialization dischargeDate status");
         res.status(200).json({ success: true, list });
     } catch (error) {
         res.status(500).json({ success: false, error: "خطأ في جلب القائمة" });
     }
 };
 
-// 7. جلب التقرير الشامل (بيان الحالة)
+// 7. جلب التقرير الشامل
 export const getFullReport = async (req, res) => {
     try {
         const { id } = req.params;
@@ -142,10 +155,9 @@ export const getFullReport = async (req, res) => {
         if (!soldier) return res.status(404).json({ success: false, message: "السجل غير موجود" });
         res.status(200).json({ success: true, soldier });
     } catch (error) {
-        res.status(500).json({ success: false, error: "خطأ في السيرفر" });
+        res.status(500).json({ success: false, error: error.message });
     }
 };
-
 // 8. جلب المجازين فقط
 export const getPenalizedSoldiers = async (req, res) => {
     try {
@@ -155,14 +167,20 @@ export const getPenalizedSoldiers = async (req, res) => {
         res.status(500).json({ success: false });
     }
 };
-// الكنترولر
+
+// 9. الحذف
+// دالة الحذف النهائي من قاعدة البيانات
 export const deleteSoldier = async (req, res) => {
     try {
-        await Soldier.findOneAndDelete({ militaryId: req.params.id });
-        res.status(200).json({ success: true, message: "تم حذف السجل نهائياً" });
+        const { id } = req.params; // سنستخدم الرقم العسكري كمعرف
+        const result = await Soldier.findOneAndDelete({ militaryId: id });
+        
+        if (!result) {
+          return res.status(404).json({ success: false, message: "السجل غير موجود" });
+        }
+
+        res.status(200).json({ success: true, message: "تم حذف سجل المقاتل نهائياً من المنظومة" });
     } catch (error) {
-        res.status(500).json({ success: false });
+        res.status(500).json({ success: false, error: "خطأ أثناء محاولة الحذف" });
     }
 };
-
-// الراوت
